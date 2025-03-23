@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, inject } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchCompanyData } from '@/api/company'
 import type { Company } from '@/types/company'
@@ -105,13 +105,6 @@ const props = defineProps({
     type: Function as PropType<(value: number | string) => void>,
     default: null,
   },
-  /**
-   * 是否启用反向选择（当选择局点时，自动更新运营商选择）
-   */
-  enableReverseSelect: {
-    type: Boolean,
-    default: false,
-  },
 })
 
 /**
@@ -122,10 +115,6 @@ const emit = defineEmits<{
    * 更新v-model值的事件
    */
   'update:modelValue': [value: number | string]
-  /**
-   * 反向更新tenantId的事件
-   */
-  'update:tenantId': [value: number | string]
   /**
    * 值变化的事件
    */
@@ -148,32 +137,17 @@ const allCompanies = ref<CompanyItem[]>([])
 const loading = ref(false)
 
 /**
- * 标记是否是通过局点反向填充触发的租户变更
- * 用于防止循环触发：选择局点→更新租户→清空局点
- */
-const isReverseFilling = ref(false)
-
-// 尝试注入父组件提供的更新函数
-const updateGridTenantId = inject<(tenantId: string | number) => void>('updateGridTenantId')
-
-// 用于存储上次反向填充的时间戳
-const lastReverseFillTime = ref(0)
-
-// 局点自身的值改变是否应该触发反向填充
-const shouldTriggerReverseFill = ref(true)
-
-/**
  * 获取局点列表数据
  */
-const getCompanyList = async (): Promise<void> => {
+async function getCompanyList(): Promise<void> {
   if (loading.value) return
 
   try {
     loading.value = true
 
-    // 调用接口，但不传分页参数，设置一个较大的pageSize确保能获取所有数据
+    // 调用接口，使用较大的pageSize确保能获取所有数据
     const res = await fetchCompanyData({
-      tenantId: undefined, // 不按运营商筛选，获取所有局点
+      tenantId: props.tenantId ? Number(props.tenantId) : undefined,
       pageNo: 1,
       pageSize: 1000, // 设置足够大的数值，确保获取所有局点
     })
@@ -187,12 +161,13 @@ const getCompanyList = async (): Promise<void> => {
         tenantName: item.tenantName,
       }))
 
-      // 根据当前tenantId过滤局点列表
+      // 过滤局点列表
       filterCompaniesByTenant()
     } else {
       ElMessage.error(res.msg || '获取局点列表失败')
     }
-  } catch {
+  } catch (error) {
+    console.error('获取局点列表失败:', error)
     ElMessage.error('获取局点列表失败')
   } finally {
     loading.value = false
@@ -202,7 +177,7 @@ const getCompanyList = async (): Promise<void> => {
 /**
  * 根据租户ID过滤局点列表
  */
-const filterCompaniesByTenant = (): void => {
+function filterCompaniesByTenant(): void {
   if (!props.tenantId || props.tenantId === '' || props.tenantId === 0) {
     // 如果没有指定租户ID，则显示所有局点
     companyList.value = [...allCompanies.value]
@@ -227,7 +202,7 @@ const filterCompaniesByTenant = (): void => {
  * 选择改变事件处理
  * @param value - 选择的值
  */
-const handleChange = (value: number | string): void => {
+function handleChange(value: number | string): void {
   // 处理空值情况
   if (value === '' || value === undefined || value === null) {
     emit('update:modelValue', '')
@@ -249,34 +224,6 @@ const handleChange = (value: number | string): void => {
   if (props.onChange) {
     props.onChange(numValue)
   }
-
-  // 如果启用了反向选择，则自动更新tenantId
-  if (props.enableReverseSelect && numValue !== props.allValue && shouldTriggerReverseFill.value) {
-    const selectedCompany = allCompanies.value.find((item) => item.id === numValue)
-    if (selectedCompany) {
-      // 设置标记，表示当前是由局点反向填充触发的租户变更
-      isReverseFilling.value = true
-      // 记录当前时间戳
-      lastReverseFillTime.value = Date.now()
-      // 执行更新tenantId的操作：
-      // 重要：我们触发三种不同的更新机制，以确保至少有一种能够成功
-
-      // 1. 通过v-model:tenantId方式 (props.onUpdate:tenantId)
-      // @ts-expect-error - 属性未在类型定义中声明但可能在实际运行时传入
-      if (props['onUpdate:tenantId'] && typeof props['onUpdate:tenantId'] === 'function') {
-        // @ts-expect-error - 忽略类型检查，因为我们知道这个属性可能存在
-        props['onUpdate:tenantId'](selectedCompany.tenantId)
-      }
-
-      // 2. 发送update:tenantId事件，让父组件捕获
-      emit('update:tenantId', selectedCompany.tenantId)
-
-      // 3. 通过注入的函数更新（最可靠的方式）
-      if (updateGridTenantId) {
-        updateGridTenantId(selectedCompany.tenantId)
-      }
-    }
-  }
 }
 
 /**
@@ -284,50 +231,9 @@ const handleChange = (value: number | string): void => {
  */
 watch(
   () => props.tenantId,
-  (newTenantId, oldTenantId) => {
-    // 获取当前时间与上次反向填充时间的差值
-    const timeSinceLastReverseFill = Date.now() - lastReverseFillTime.value
-    // 判断是否是由反向填充触发的变更 - 如果在1000ms内，认为是由反向填充触发的
-    const isFromReverseFill = timeSinceLastReverseFill < 1000
-    // 暂时禁止反向填充，以避免循环
-    shouldTriggerReverseFill.value = false
-    // 检查所选择的局点是否属于新租户
-    if (props.modelValue && props.modelValue !== props.allValue) {
-      const selectedCompanyId =
-        typeof props.modelValue === 'string' ? parseInt(props.modelValue) : props.modelValue
-
-      // 找到当前选中的局点
-      const selectedCompany = allCompanies.value.find((item) => item.id === selectedCompanyId)
-
-      // 检查该局点是否属于新选择的租户
-      if (selectedCompany) {
-        const selectedTenantId =
-          typeof newTenantId === 'string' ? parseInt(newTenantId || '0') : newTenantId || 0
-
-        // 如果所选局点不属于当前租户，且不是由反向填充触发的，则需要清空
-        if (
-          !isFromReverseFill &&
-          selectedCompany.tenantId !== selectedTenantId &&
-          oldTenantId &&
-          newTenantId !== oldTenantId
-        ) {
-          emit('update:modelValue', '')
-          // 如果提供了onChange回调，则调用它
-          if (props.onChange) {
-            props.onChange('')
-          }
-        } else {
-        }
-      }
-    }
-
-    // 当租户ID变化时，重新过滤局点列表
-    filterCompaniesByTenant()
-
-    // 延迟一小段时间后恢复允许反向填充
-    setTimeout(() => {
-      shouldTriggerReverseFill.value = true
-    }, 500)
+  () => {
+    // 当tenantId变化时，重新获取或过滤局点列表
+    getCompanyList()
   },
 )
 

@@ -48,9 +48,6 @@
             :name="item.prop"
             v-bind="item.props || {}"
             @update:model-value="updateQueryField(item.prop, $event)"
-            @update:tenantId="
-              (value: string | number) => handleCustomEvent('update:tenantId', value, item)
-            "
           ></component>
         </el-form-item>
         <div class="button-wrapper">
@@ -77,7 +74,7 @@ import type { PropType } from 'vue'
 import { ref, reactive, watch } from 'vue'
 import type { FormOptionList } from '@/types/form-option'
 
-const emit = defineEmits(['update:query', 'update:tenantId'])
+const emit = defineEmits(['update:query'])
 
 const props = defineProps({
   query: {
@@ -169,27 +166,6 @@ const handleInputChange = (item: FormOptionList, value: string): void => {
   // 如果有onInput回调，则调用它
   if (item.props?.onInput && typeof item.props.onInput === 'function') {
     item.props.onInput(value)
-  }
-}
-
-// 处理自定义组件的事件
-const handleCustomEvent = (
-  eventName: string,
-  value: string | number | boolean,
-  item: FormOptionList,
-): void => {
-  // 特殊处理update:tenantId事件，实现反向填充
-  if (eventName === 'update:tenantId') {
-    // 1. 向上传递update:tenantId事件，让父组件可以直接处理
-    emit('update:tenantId', value)
-
-    // 2. 更新本地查询条件中的tenantId
-    const tenantIdField = 'tenantId'
-    if (localQuery[tenantIdField] !== value) {
-      localQuery[tenantIdField] = value
-      // 3. 发送update:query事件以触发父组件的更新
-      emit('update:query', { ...localQuery })
-    }
   }
 }
 </script>

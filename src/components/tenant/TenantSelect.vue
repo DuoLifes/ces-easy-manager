@@ -83,6 +83,13 @@ const props = defineProps({
     type: Function as PropType<(value: number | string) => void>,
     default: null,
   },
+  /**
+   * 是否在组件挂载时自动加载数据
+   */
+  autoLoad: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 /**
@@ -112,7 +119,7 @@ const loading = ref(false)
 /**
  * 获取运营商列表数据
  */
-const getTenantList = async (): Promise<void> => {
+async function getTenantList(): Promise<void> {
   if (loading.value) return
 
   try {
@@ -120,7 +127,8 @@ const getTenantList = async (): Promise<void> => {
     const res = await fetchTenantList()
 
     if (res.code === '00000') {
-      tenantList.value = res.data
+      // 保存数据
+      tenantList.value = [...res.data]
 
       // 如果需要添加全部选项
       if (props.showAll) {
@@ -132,7 +140,8 @@ const getTenantList = async (): Promise<void> => {
     } else {
       ElMessage.error(res.msg || '获取运营商列表失败')
     }
-  } catch {
+  } catch (error) {
+    console.error('获取运营商列表失败:', error)
     ElMessage.error('获取运营商列表失败')
   } finally {
     loading.value = false
@@ -143,7 +152,7 @@ const getTenantList = async (): Promise<void> => {
  * 选择改变事件处理
  * @param value - 选择的值
  */
-const handleChange = (value: number | string): void => {
+function handleChange(value: number | string): void {
   // 处理空值情况
   if (value === '' || value === undefined || value === null) {
     emit('update:modelValue', '')
@@ -160,6 +169,7 @@ const handleChange = (value: number | string): void => {
 
   // 更新绑定值
   emit('update:modelValue', numValue)
+
   // 如果提供了onChange回调，则调用它
   if (props.onChange) {
     props.onChange(numValue)
@@ -167,10 +177,24 @@ const handleChange = (value: number | string): void => {
 }
 
 /**
+ * 刷新租户列表
+ */
+function refreshTenantList(): void {
+  getTenantList()
+}
+
+// 暴露给父组件的方法
+defineExpose({
+  refreshTenantList,
+})
+
+/**
  * 组件挂载时获取运营商列表
  */
 onMounted(() => {
-  getTenantList()
+  if (props.autoLoad) {
+    getTenantList()
+  }
 })
 </script>
 

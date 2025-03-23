@@ -6,7 +6,7 @@ import type { Grid, GridQuery, GridCreate, GridUpdate } from '@/types/grid'
  */
 interface PageResult<T> {
   /** 记录列表 */
-  list: T[]
+  records: T[]
   /** 总记录数 */
   total: number
   /** 每页大小 */
@@ -21,8 +21,8 @@ interface PageResult<T> {
  * API 响应数据接口
  */
 interface ApiResponse<T> {
-  /** 状态码，200表示成功 */
-  code: number
+  /** 状态码，'00000'表示成功 */
+  code: string
   /** 响应消息 */
   msg: string
   /** 响应数据 */

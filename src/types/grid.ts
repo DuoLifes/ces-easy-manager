@@ -3,12 +3,12 @@
  */
 export interface Grid {
   id: number
-  tenantId: string
-  tenantName?: string
-  companyId: string
-  companyName?: string
+  tenantId: number | string
+  tenantName: string
+  companyId: number | string
+  companyName: string
   gridName: string
-  creator: string
+  operatorName: string
   createTime: string
   updateTime: string
 }
@@ -17,19 +17,20 @@ export interface Grid {
  * 网格查询参数
  */
 export interface GridQuery {
-  tenantId?: string
-  companyId?: string
+  tenantId?: number | string
+  companyId?: number | string
   gridName?: string
   pageNo?: number
   pageSize?: number
+  name?: string
 }
 
 /**
  * 网格创建参数
  */
 export interface GridCreate {
-  tenantId: string
-  companyId: string
+  tenantId: string | number
+  companyId: string | number
   gridName: string
   creator: string
 }
@@ -39,7 +40,7 @@ export interface GridCreate {
  */
 export interface GridUpdate {
   id: number
-  tenantId: string
-  companyId: string
+  tenantId: string | number
+  companyId: string | number
   gridName: string
 }
