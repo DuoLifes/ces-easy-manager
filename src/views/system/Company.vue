@@ -30,8 +30,7 @@
         :max-height="650"
         title="局点列表"
         @addOperate="handleAdd"
-      >
-      </TableCustom>
+      />
     </div>
     <el-dialog
       v-model="visible"
@@ -77,10 +76,6 @@ interface ApiResponse<T> {
   data: T
 }
 
-interface ApiError {
-  msg?: string
-}
-
 // 为组件定义名称
 defineOptions({
   name: 'CompanyManagementView',
@@ -95,19 +90,23 @@ const query = reactive({
   companyName: '',
 })
 
-// 直接跟踪选择的值
+// 跟踪选择的值
 const selectedTenantId = ref<number | string>(0)
 const inputCompanyName = ref('')
 
-// 处理运营商选择变化
-const handleTenantChange = (value: number | string) => {
-  console.log('运营商选择变化:', value)
+/**
+ * 处理运营商选择变化
+ * @param value - 选择的运营商ID
+ */
+const handleTenantChange = (value: number | string): void => {
   selectedTenantId.value = value
 }
 
-// 处理局点名称输入变化
-const handleCompanyNameInput = (value: string) => {
-  console.log('局点名称输入变化:', value)
+/**
+ * 处理局点名称输入变化
+ * @param value - 输入的局点名称
+ */
+const handleCompanyNameInput = (value: string): void => {
   inputCompanyName.value = value
 }
 
@@ -201,17 +200,13 @@ const options = ref<FormOption>({
 /**
  * 数据处理方法
  */
-// 获取表格数据
-const getData = async () => {
+/**
+ * 获取表格数据
+ */
+const getData = async (): Promise<void> => {
   try {
     // 显示加载状态
     loading.value = true
-
-    // 调试信息
-    console.log('getData 被调用，手动跟踪的条件:', {
-      tenantId: selectedTenantId.value,
-      companyName: inputCompanyName.value,
-    })
 
     // 构造API参数，使用直接跟踪的值
     const params = {
@@ -221,23 +216,20 @@ const getData = async () => {
       pageSize: page.size,
     }
 
-    console.log('发送API请求参数:', JSON.stringify(params))
-
     const res = await fetchCompanyData(params)
 
     if (res.code === '00000') {
       // 更新表格数据和总数
       tableData.value = res.data.records || []
       page.total = res.data.total || 0
-      console.log('API返回数据成功:', res.data.records.length)
     } else {
       ElMessage.error(res.msg || '获取数据失败')
       // 清空数据
       tableData.value = []
       page.total = 0
     }
-  } catch (error) {
-    console.error('获取数据失败:', error)
+  } catch {
+    // 错误处理
     ElMessage.error('获取数据失败')
     // 清空数据
     tableData.value = []
@@ -251,7 +243,7 @@ const getData = async () => {
 /**
  * 重置分页参数
  */
-const resetPagination = () => {
+const resetPagination = (): void => {
   page.index = 1
   page.size = 10
   page.total = 0
@@ -260,42 +252,32 @@ const resetPagination = () => {
 /**
  * 查询相关方法
  */
-// 重置查询条件 - 由TableSearch组件内部调用
-const resetQuery = () => {
-  console.log('Company.vue - 重置查询条件开始')
-
-  // 1. 重置跟踪变量 (这对于正确处理TenantSelect组件至关重要)
+/**
+ * 重置查询条件 - 由TableSearch组件内部调用
+ */
+const resetQuery = (): void => {
+  // 1. 重置跟踪变量
   selectedTenantId.value = 0
   inputCompanyName.value = ''
-  console.log('Company.vue - 已重置跟踪变量:', {
-    selectedTenantId: selectedTenantId.value,
-    inputCompanyName: inputCompanyName.value,
-  })
 
   // 2. 强制重置query对象
   query.tenantId = ''
   query.companyName = ''
-  console.log('Company.vue - 已重置query对象:', { ...query })
 
-  // 3. 强制刷新整个表单组件 - 这会导致TableSearch组件完全重建
+  // 3. 强制刷新整个表单组件
   searchFormKey.value += 1
-  console.log('Company.vue - 已增加searchFormKey以强制重建表单:', searchFormKey.value)
 
   // 4. 重置分页参数
   resetPagination()
-  console.log('Company.vue - 已重置分页参数')
 
   // 5. 重新获取数据
   getData()
-  console.log('Company.vue - 重置查询条件完成')
 }
 
-// 执行查询
-const handleSearch = () => {
-  console.log('执行查询, 直接跟踪的条件:', {
-    tenantId: selectedTenantId.value,
-    companyName: inputCompanyName.value,
-  })
+/**
+ * 执行查询
+ */
+const handleSearch = (): void => {
   // 重置分页参数
   resetPagination()
   // 重新加载数据
@@ -305,16 +287,22 @@ const handleSearch = () => {
 /**
  * 分页相关方法
  */
-// 页码变化
-const changePage = (val: number) => {
+/**
+ * 页码变化处理
+ * @param val - 新的页码
+ */
+const changePage = (val: number): void => {
   // 更新页码
   page.index = val
   // 重新加载数据
   getData()
 }
 
-// 每页条数变化
-const handleSizeChange = (val: number) => {
+/**
+ * 每页条数变化处理
+ * @param val - 新的每页条数
+ */
+const handleSizeChange = (val: number): void => {
   // 更新每页条数
   page.size = val
   // 重置到第一页
@@ -326,8 +314,10 @@ const handleSizeChange = (val: number) => {
 /**
  * 事件处理方法
  */
-// 表单操作相关
-const handleAdd = () => {
+/**
+ * 添加局点
+ */
+const handleAdd = (): void => {
   // 设置默认值，确保表单验证能通过
   rowData.value = {
     tenantId: '', // 初始为空，让用户选择
@@ -338,7 +328,11 @@ const handleAdd = () => {
   visible.value = true
 }
 
-const handleEdit = (row: Company) => {
+/**
+ * 编辑局点
+ * @param row - 要编辑的局点数据
+ */
+const handleEdit = (row: Company): void => {
   rowData.value = { ...row }
   isEdit.value = true
   visible.value = true
@@ -348,7 +342,7 @@ const handleEdit = (row: Company) => {
  * 处理删除操作
  * @param row - 要删除的局点数据
  */
-const handleDelete = async (row: Company) => {
+const handleDelete = async (row: Company): Promise<void> => {
   try {
     const res = await deleteCompany(row.id)
     if (res.code === '00000') {
@@ -357,13 +351,16 @@ const handleDelete = async (row: Company) => {
     } else {
       ElMessage.error(res.msg || '删除失败')
     }
-  } catch (error) {
-    console.error('删除失败:', error)
-    ElMessage.error((error as ApiError)?.msg || '删除失败')
+  } catch {
+    ElMessage.error('删除失败')
   }
 }
 
-const handleUpdate = async (formData: Partial<Company>) => {
+/**
+ * 处理更新操作
+ * @param formData - 表单数据
+ */
+const handleUpdate = async (formData: Partial<Company>): Promise<void> => {
   try {
     // 检查必填字段
     if (formData.tenantId === undefined || formData.tenantId === '' || !formData.name) {
@@ -409,13 +406,15 @@ const handleUpdate = async (formData: Partial<Company>) => {
         ElMessage.error(res.msg || '更新失败')
       }
     }
-  } catch (error) {
-    console.error('操作失败:', error)
-    ElMessage.error((error as ApiError)?.msg || '操作失败')
+  } catch {
+    ElMessage.error('操作失败')
   }
 }
 
-const closeDialog = () => {
+/**
+ * 关闭对话框
+ */
+const closeDialog = (): void => {
   visible.value = false
   isEdit.value = false
   rowData.value = {}

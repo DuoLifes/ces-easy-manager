@@ -187,7 +187,6 @@ const options = ref<FormOption>({
         showAll: false,
         enableReverseSelect: true,
         'onUpdate:tenantId': (value: string | number) => {
-          console.log('Grid: 表单内局点组件反向选择运营商:', value)
           rowData.value.tenantId = String(value)
         },
       },
@@ -283,8 +282,6 @@ const resetPagination = () => {
  */
 // 处理查询对象更新
 const handleQueryUpdate = (newQuery: typeof query): void => {
-  console.log('Grid: 查询条件更新:', JSON.stringify(newQuery))
-
   const oldTenantId = query.tenantId
   const newTenantId = newQuery.tenantId
 
@@ -293,7 +290,7 @@ const handleQueryUpdate = (newQuery: typeof query): void => {
 
   // 检查是否是运营商发生了变化
   if (oldTenantId !== newTenantId) {
-    console.log('Grid: 检测到运营商变化:', oldTenantId, '->', newTenantId)
+    // 运营商变化时的处理逻辑
   }
 }
 
@@ -445,7 +442,6 @@ const handleUpdate = async (formData: Partial<Grid>) => {
 
 // 对话框事件处理
 const handleDialogOpen = () => {
-  console.log('Grid: 对话框打开')
   // 对话框打开后，等一小段时间再重置表单，确保组件已挂载
   setTimeout(() => {
     if (editFormRef.value) {
@@ -455,7 +451,6 @@ const handleDialogOpen = () => {
 }
 
 const handleDialogClosed = () => {
-  console.log('Grid: 对话框已关闭')
   // 不需要在这里调用closeDialog，因为closed事件在关闭后触发
 }
 
