@@ -1,0 +1,156 @@
+* {
+  margin: 0;
+  padding: 0;
+  outline: 0 !important;
+}
+
+:root {
+  --primary-color: #1890ff;
+  --header-bg-color: #1890ff;
+  --header-text-color: #fff;
+  --sidebar-bg: #fff;
+  --sidebar-active-bg: #e6f7ff;
+  --sidebar-text-color: #333333;
+  --table-header-bg: #f5f5f5;
+}
+
+body {
+  font-family:
+    'PingFang SC', 'Helvetica Neue', Helvetica, 'microsoft yahei', arial, STHeiTi, sans-serif;
+  background-color: #f0f2f5;
+}
+
+a {
+  text-decoration: none;
+}
+i {
+  font-style: normal;
+}
+
+.container {
+  padding: 20px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+}
+
+.el-table th {
+  background-color: var(--table-header-bg) !important;
+}
+
+.plugins-tips {
+  padding: 20px 10px;
+  margin-bottom: 20px;
+  background: #eef1f6;
+}
+
+.plugins-tips a {
+  color: var(--el-color-primary);
+}
+
+.el-button + .el-tooltip {
+  margin-left: 10px;
+}
+
+.mgb20 {
+  margin-bottom: 20px;
+}
+.mgb10 {
+  margin-bottom: 10px;
+}
+.mr10 {
+  margin-right: 10px;
+}
+
+.move-enter-active,
+.move-leave-active {
+  transition: opacity 0.1s ease;
+}
+
+.move-enter-from,
+.move-leave-to {
+  opacity: 0;
+}
+
+.el-time-panel__content::after,
+.el-time-panel__content::before {
+  margin-top: -7px;
+}
+
+.el-time-spinner__wrapper .el-scrollbar__wrap:not(.el-scrollbar__wrap--hidden-default) {
+  padding-bottom: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.el-button--primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.el-menu {
+  background-color: var(--sidebar-bg) !important;
+}
+
+.el-menu-item {
+  color: var(--sidebar-text-color) !important;
+  font-size: 14px !important;
+}
+
+.el-menu-item:hover {
+  background-color: var(--sidebar-active-bg) !important;
+  color: var(--primary-color) !important;
+}
+
+.el-menu-item.is-active {
+  background-color: var(--sidebar-active-bg) !important;
+  color: var(--primary-color) !important;
+}
+
+.el-sub-menu__title {
+  color: var(--sidebar-text-color) !important;
+  font-size: 14px !important;
+}
+
+.el-sub-menu__title:hover {
+  background-color: var(--sidebar-active-bg) !important;
+  color: var(--primary-color) !important;
+}
+
+.el-pagination.is-background .el-pager li:not(.disabled).active {
+  background-color: var(--primary-color) !important;
+}
+
+/* 修复el-popconfirm组件中问号和文本不在同一水平线上的问题 */
+.el-popconfirm .el-popconfirm__main {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.el-popconfirm .el-popconfirm__icon {
+  margin-right: 5px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* 调整el-popconfirm宽度，使文字在一行排列 */
+.el-popconfirm {
+  min-width: 260px !important;
+}
+
+.el-popover.el-popper {
+  min-width: 260px !important;
+  max-width: 300px !important;
+}
+
+.el-popconfirm__action {
+  margin-top: 8px !important;
+}
