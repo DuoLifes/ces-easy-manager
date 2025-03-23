@@ -21,8 +21,8 @@
         :pageSize="page.size"
         :pageSizes="[10, 15, 20]"
         :sizeChange="handleSizeChange"
-        :editFunc="handleEdit"
-        :delFunc="handleDelete"
+        :editFunc="(row: any) => handleEdit(row as Company)"
+        :delFunc="(row: any) => handleDelete(row as Company)"
         :showView="false"
         :showEdit="true"
         :showDelete="true"
@@ -150,7 +150,9 @@ const searchOpt = ref<FormOptionList[]>([
     label: '局点名称：',
     prop: 'companyName',
     placeholder: '请输入局点名称',
-    onInput: handleCompanyNameInput,
+    props: {
+      onInput: handleCompanyNameInput,
+    },
   },
 ])
 
@@ -210,7 +212,7 @@ const getData = async (): Promise<void> => {
 
     // 构造API参数，使用直接跟踪的值
     const params = {
-      tenantId: Number(selectedTenantId.value) || 0,
+      tenantId: selectedTenantId.value ? Number(selectedTenantId.value) : 0,
       companyName: inputCompanyName.value || '',
       pageNo: page.index,
       pageSize: page.size,
@@ -320,7 +322,7 @@ const handleSizeChange = (val: number): void => {
 const handleAdd = (): void => {
   // 设置默认值，确保表单验证能通过
   rowData.value = {
-    tenantId: '', // 初始为空，让用户选择
+    tenantId: 0, // 初始为0，让用户选择
     name: '',
     description: '',
   }
@@ -363,7 +365,7 @@ const handleDelete = async (row: Company): Promise<void> => {
 const handleUpdate = async (formData: Partial<Company>): Promise<void> => {
   try {
     // 检查必填字段
-    if (formData.tenantId === undefined || formData.tenantId === '' || !formData.name) {
+    if (!formData.tenantId || !formData.name) {
       ElMessage.error('请填写必填字段')
       return
     }
@@ -372,7 +374,7 @@ const handleUpdate = async (formData: Partial<Company>): Promise<void> => {
     const tenantId =
       typeof formData.tenantId === 'string'
         ? parseInt(formData.tenantId)
-        : (formData.tenantId as number)
+        : Number(formData.tenantId)
 
     if (!isEdit.value) {
       // 新增局点

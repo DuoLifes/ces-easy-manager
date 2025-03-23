@@ -39,7 +39,6 @@ service.interceptors.request.use(
     return config
   },
   (error: AxiosError) => {
-    console.error('请求错误:', error)
     return Promise.reject(error)
   },
 )
@@ -53,7 +52,6 @@ service.interceptors.response.use(
     return response.data
   },
   (error: AxiosError<ApiResponse<unknown>>) => {
-    console.error('响应错误:', error)
     // 获取错误信息
     const message = error.response?.data?.msg || '网络请求失败'
     ElMessage.error(message)

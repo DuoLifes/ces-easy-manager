@@ -15,7 +15,7 @@
             :disabled="item.disabled"
             :placeholder="item.placeholder"
             clearable
-            @update:modelValue="(value) => handleInputChange(item, value)"
+            @update:modelValue="(value: string) => handleInputChange(item, value)"
           ></el-input>
           <el-select
             v-else-if="item.type === 'select'"
@@ -24,7 +24,7 @@
             :disabled="item.disabled"
             :placeholder="item.placeholder"
             clearable
-            @update:modelValue="(value) => updateQueryField(item.prop, value)"
+            @update:modelValue="(value: string | number) => updateQueryField(item.prop, value)"
           >
             <el-option
               v-for="opt in item.opts"
@@ -39,7 +39,7 @@
             v-model="localQuery[item.prop]"
             :name="item.prop"
             :value-format="item.format"
-            @update:modelValue="updateQueryField(item.prop, $event)"
+            @update:modelValue="(value: string | null) => updateQueryField(item.prop, value)"
           ></el-date-picker>
           <component
             v-else-if="item.type === 'custom' && item.component"
@@ -48,6 +48,9 @@
             :name="item.prop"
             v-bind="item.props || {}"
             @update:model-value="updateQueryField(item.prop, $event)"
+            @update:tenantId="
+              (value: string | number) => handleCustomEvent('update:tenantId', value, item)
+            "
           ></component>
         </el-form-item>
         <div class="button-wrapper">
@@ -61,14 +64,20 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts">
+export default {
+  name: 'TableSearch',
+}
+</script>
+
+<script setup lang="ts">
 import type { FormInstance } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import type { PropType } from 'vue'
-import { ref, reactive, watch, markRaw } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import type { FormOptionList } from '@/types/form-option'
 
-const emit = defineEmits(['update:query'])
+const emit = defineEmits(['update:query', 'update:tenantId'])
 
 const props = defineProps({
   query: {
@@ -104,7 +113,6 @@ const localQuery = reactive<Record<string, string | number | boolean>>({ ...prop
 watch(
   () => props.query,
   (newQuery) => {
-    console.log('TableSearch - props.query 变化:', newQuery)
     // 深拷贝以避免引用问题
     Object.keys(localQuery).forEach((key) => {
       delete localQuery[key]
@@ -118,7 +126,6 @@ watch(
 watch(
   localQuery,
   (newLocalQuery) => {
-    console.log('localQuery 变化，更新父组件:', newLocalQuery)
     emit('update:query', { ...newLocalQuery })
   },
   { deep: true },
@@ -127,29 +134,19 @@ watch(
 const searchRef = ref<FormInstance>()
 const resetForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  console.log('TableSearch - 开始重置表单')
-
   // 1. 重置本地查询条件
   Object.keys(localQuery).forEach((key) => {
     localQuery[key] = ''
   })
-  console.log('TableSearch - 已清空本地查询条件:', { ...localQuery })
-
   // 2. 手动同步到父组件，确保更新立即生效
   emit('update:query', { ...localQuery })
-  console.log('TableSearch - 已同步更新到父组件')
-
   // 3. 重置表单DOM状态
   formEl.resetFields()
-  console.log('TableSearch - 已重置表单字段')
-
   // 4. 调用父组件的reset方法
   props.reset()
-  console.log('TableSearch - 已调用父组件reset方法')
 }
 
 const search = () => {
-  console.log('TableSearch - 搜索:', { ...localQuery })
   // 已经不需要手动触发更新，watch 会处理
 
   // 执行搜索
@@ -158,37 +155,43 @@ const search = () => {
 
 // 更新查询字段的通用方法
 const updateQueryField = (field: string, value: string | number | boolean | null): void => {
-  console.log(`TableSearch - 字段 ${field} 更新为:`, value, typeof value)
-  localQuery[field] = value
+  if (value !== null) {
+    localQuery[field] = value
+  } else {
+    localQuery[field] = ''
+  }
   // 已经不需要手动触发更新，watch 会处理
 }
 
 // 处理输入框变化，支持onInput回调
 const handleInputChange = (item: FormOptionList, value: string): void => {
-  console.log(`TableSearch - 输入框 ${item.prop} 更新为:`, value)
-  // 更新本地查询字段
-  updateQueryField(item.prop, value)
-
-  // 如果有onInput回调，调用它
-  if (item.onInput && typeof item.onInput === 'function') {
-    item.onInput(value)
+  localQuery[item.prop] = value
+  // 如果有onInput回调，则调用它
+  if (item.props?.onInput && typeof item.props.onInput === 'function') {
+    item.props.onInput(value)
   }
 }
 
-// 确保选项中的组件不会被设置为响应式
-watch(
-  () => props.options,
-  (newOptions) => {
-    // 处理组件以确保它们不是响应式的
-    newOptions.forEach((item) => {
-      if (item.type === 'custom' && item.component) {
-        // 确保组件使用markRaw包装
-        item.component = markRaw(item.component)
-      }
-    })
-  },
-  { deep: true, immediate: true },
-)
+// 处理自定义组件的事件
+const handleCustomEvent = (
+  eventName: string,
+  value: string | number | boolean,
+  item: FormOptionList,
+): void => {
+  // 特殊处理update:tenantId事件，实现反向填充
+  if (eventName === 'update:tenantId') {
+    // 1. 向上传递update:tenantId事件，让父组件可以直接处理
+    emit('update:tenantId', value)
+
+    // 2. 更新本地查询条件中的tenantId
+    const tenantIdField = 'tenantId'
+    if (localQuery[tenantIdField] !== value) {
+      localQuery[tenantIdField] = value
+      // 3. 发送update:query事件以触发父组件的更新
+      emit('update:query', { ...localQuery })
+    }
+  }
+}
 </script>
 
 <style scoped>

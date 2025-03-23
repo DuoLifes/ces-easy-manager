@@ -14,6 +14,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchTenantList, type TenantItem } from '@/api/tenant'
+import type { PropType } from 'vue'
 
 /**
  * 定义组件名称
@@ -159,7 +160,6 @@ const handleChange = (value: number | string): void => {
 
   // 更新绑定值
   emit('update:modelValue', numValue)
-
   // 如果提供了onChange回调，则调用它
   if (props.onChange) {
     props.onChange(numValue)

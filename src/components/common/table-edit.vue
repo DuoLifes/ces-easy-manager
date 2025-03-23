@@ -90,7 +90,7 @@
     </div>
   </el-form>
 </template>
-
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script lang="ts" setup>
 import type { FormOption } from '@/types/form-option'
 import type { FormInstance, FormRules, UploadProps, FormItemRule } from 'element-plus'
@@ -186,17 +186,13 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
 
   try {
-    await formEl.validate((valid, fields) => {
+    await formEl.validate((valid) => {
       if (valid) {
-        console.log('TableEdit: 表单验证通过，提交数据')
         update(form.value)
       } else {
-        console.log('TableEdit: 表单验证失败', fields)
       }
     })
-  } catch (e) {
-    console.error('TableEdit: 表单验证过程出错', e)
-  }
+  } catch (e) {}
 }
 
 // 重置表单方法
